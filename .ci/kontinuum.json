@@ -1,0 +1,13 @@
+{
+  "type": "library",
+  "stages": [
+     {
+      "name": "lint",
+      "needsEmulator": false
+    },
+    {
+      "name": "build",
+      "needsEmulator": false
+    }
+  ]
+}
