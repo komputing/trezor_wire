@@ -16,14 +16,11 @@ enum MessageType {
     MessageType_Failure = 3 [(wire_out) = true];
     MessageType_ChangePin = 4 [(wire_in) = true];
     MessageType_WipeDevice = 5 [(wire_in) = true];
-    MessageType_FirmwareErase = 6 [(wire_in) = true];
-    MessageType_FirmwareUpload = 7 [(wire_in) = true];
     MessageType_GetEntropy = 9 [(wire_in) = true];
     MessageType_Entropy = 10 [(wire_out) = true];
     MessageType_GetPublicKey = 11 [(wire_in) = true];
     MessageType_PublicKey = 12 [(wire_out) = true];
     MessageType_LoadDevice = 13 [(wire_in) = true];
-    MessageType_ResetDevice = 14 [(wire_in) = true];
     MessageType_SignTx = 15 [(wire_in) = true];
     // Formerly SimpleSignTx = 16
     MessageType_Features = 17 [(wire_out) = true];
@@ -68,63 +65,15 @@ enum MessageType {
     MessageType_CharacterAck = 81 [(wire_in) = true];
     MessageType_RawTxAck = 82 [(wire_in) = true];
     MessageType_ApplyPolicies = 83 [(wire_in) = true];
-    MessageType_FlashHash = 84 [(wire_in) = true];
-    MessageType_FlashWrite = 85 [(wire_in) = true];
     MessageType_FlashHashResponse = 86 [(wire_out) = true];
     MessageType_DebugLinkFlashDump = 87 [(wire_debug_in) = true];
     MessageType_DebugLinkFlashDumpResponse = 88 [(wire_debug_out) = true];
     MessageType_SoftReset = 89 [(wire_debug_in) = true];
-    MessageType_DebugLinkDecision = 100 [(wire_debug_in) = true];
-    MessageType_DebugLinkGetState = 101 [(wire_debug_in) = true];
-    MessageType_DebugLinkState = 102 [(wire_debug_out) = true];
-    MessageType_DebugLinkStop = 103 [(wire_debug_in) = true];
-    MessageType_DebugLinkLog = 104 [(wire_debug_out) = true];
     MessageType_DebugLinkFillConfig = 105 [(wire_debug_out) = true];
-    MessageType_GetCoinTable = 106 [(wire_in) = true];
-    MessageType_CoinTable = 107 [(wire_out) = true];
     MessageType_EthereumSignMessage = 108 [(wire_in) = true];
     MessageType_EthereumVerifyMessage = 109 [(wire_in) = true];
     MessageType_EthereumMessageSignature = 110 [(wire_out) = true];
 
-    // Ripple
-    MessageType_RippleGetAddress = 400 [(wire_in) = true];
-    MessageType_RippleAddress = 401 [(wire_out) = true];
-    MessageType_RippleSignTx = 402 [(wire_in) = true];
-    MessageType_RippleSignedTx = 403 [(wire_in) = true];
-
-    // EOS
-    MessageType_EosGetPublicKey = 600 [(wire_in) = true];
-    MessageType_EosPublicKey = 601 [(wire_out) = true];
-    MessageType_EosSignTx = 602 [(wire_in) = true];
-    MessageType_EosTxActionRequest = 603 [(wire_out) = true];
-    MessageType_EosTxActionAck = 604 [(wire_in) = true];
-    MessageType_EosSignedTx = 605 [(wire_out) = true];
-
-    // Nano
-    MessageType_NanoGetAddress = 700 [(wire_in) = true];
-    MessageType_NanoAddress = 701 [(wire_out) = true];
-    MessageType_NanoSignTx = 702 [(wire_in) = true];
-    MessageType_NanoSignedTx = 703 [(wire_out) = true];
-
-    // Binance
-    MessageType_BinanceGetAddress = 800 [(wire_in) = true];
-    MessageType_BinanceAddress = 801 [(wire_out) = true];
-    MessageType_BinanceGetPublicKey = 802 [(wire_in) = true];
-    MessageType_BinancePublicKey = 803 [(wire_out) = true];
-    MessageType_BinanceSignTx = 804 [(wire_in) = true];
-    MessageType_BinanceTxRequest = 805 [(wire_out) = true];
-    MessageType_BinanceTransferMsg = 806 [(wire_in) = true];
-    MessageType_BinanceOrderMsg = 807 [(wire_in) = true];
-    MessageType_BinanceCancelMsg = 808 [(wire_in) = true];
-    MessageType_BinanceSignedTx = 809 [(wire_out) = true];
-
-    // Cosmos
-    MessageType_CosmosGetAddress = 900 [(wire_in) = true];
-    MessageType_CosmosAddress = 901 [(wire_out) = true];
-    MessageType_CosmosSignTx = 902 [(wire_in) = true];
-    MessageType_CosmosMsgRequest = 903 [(wire_out) = true];
-    MessageType_CosmosMsgAck = 904 [(wire_in) = true];
-    MessageType_CosmosSignedTx = 905 [(wire_out) = true];
 }
 
 ////////////////////
@@ -202,30 +151,6 @@ message ClearSession {
 }
 
 /**
- * Request: change language and/or label of the device
- * @next Success
- * @next Failure
- * @next ButtonRequest
- * @next PinMatrixRequest
- */
-message ApplySettings {
-    optional string language = 1;
-    optional string label = 2;
-    optional bool use_passphrase = 3;
-    optional uint32 auto_lock_delay_ms = 4;
-    optional uint32 u2f_counter = 5;
-}
-
-/**
- * Request: Starts workflow for setting/changing/removing the PIN
- * @next ButtonRequest
- * @next PinMatrixRequest
- */
-message ChangePin {
-    optional bool remove = 1; // is PIN removal requested?
-}
-
-/**
  * Request: Test if the device is alive, device sends back the message in Success response
  * @next Success
  */
@@ -300,6 +225,7 @@ message Cancel {
  * @next Cancel
  */
 message PassphraseRequest {
+    optional bool _on_device = 1; //  [deprecated = true]; // <2.3.0
 }
 
 /**
@@ -308,61 +234,28 @@ message PassphraseRequest {
  */
 message PassphraseAck {
     required string passphrase = 1;
+    optional bytes _state = 2; // [deprecated = true]; // <2.3.0
+    optional bool on_device = 3; // user wants to enter passphrase on the device
+}
+
+
+/**
+ * Response: Device awaits passphrase state
+ * Deprecated in 2.3.0
+ * @next Deprecated_PassphraseStateAck
+ */
+message Deprecated_PassphraseStateRequest {
+    //option deprecated = true;
+    optional bytes state = 1; // actual device state
 }
 
 /**
- * Request: Request a sample of random data generated by hardware RNG. May be used for testing.
- * @next ButtonRequest
- * @next Entropy
- * @next Failure
+ * Request: Send passphrase state back
+ * Deprecated in 2.3.0
+ * @auxend
  */
-message GetEntropy {
-    required uint32 size = 1; // size of requested entropy
-}
-
-/**
- * Response: Reply with random data generated by internal RNG
- * @prev GetEntropy
- */
-message Entropy {
-    required bytes entropy = 1; // stream of random generated bytes
-}
-
-/**
- * Request: Ask device for public key corresponding to address_n path
- * @next PassphraseRequest
- * @next PublicKey
- * @next Failure
- */
-message GetPublicKey {
-    repeated uint32 address_n = 1; // BIP-32 path to derive the key from master node
-    optional string ecdsa_curve_name = 2; // ECDSA curve name to use
-    optional bool show_display = 3; // optionally show on display before sending the result
-    optional string coin_name = 4 [default = 'Bitcoin'];
-    optional InputScriptType script_type = 5 [default = SPENDADDRESS]; // used to distinguish between various address formats (non-segwit, segwit, etc.)
-}
-
-/**
- * Response: Contains public key derived from device private seed
- * @prev GetPublicKey
- */
-message PublicKey {
-    required HDNodeType node = 1; // BIP32 public node
-    optional string xpub = 2; // serialized form of public node
-}
-
-/**
- * Request: Ask device for address corresponding to address_n path
- * @next PassphraseRequest
- * @next Address
- * @next Failure
- */
-message GetAddress {
-    repeated uint32 address_n = 1; // BIP-32 path to derive the key from master node
-    optional string coin_name = 2 [default = 'Bitcoin'];
-    optional bool show_display = 3; // optionally show on display before sending the result
-    optional MultisigRedeemScriptType multisig = 4; // filled if we are showing a multisig address
-    optional InputScriptType script_type = 5 [default = SPENDADDRESS]; // used to distinguish between various address formats (non-segwit, segwit, etc.)
+message Deprecated_PassphraseStateAck {
+    //option deprecated = true;
 }
 
 /**
@@ -393,268 +286,14 @@ message EthereumAddress {
     optional string address_str = 2;
 }
 
-/**
- * Request: Request device to wipe all sensitive data and settings
- * @next ButtonRequest
- */
-message WipeDevice {
-}
-
-/**
- * Request: Load seed and related internal settings from the computer
- * @next ButtonRequest
- * @next Success
- * @next Failure
- */
-message LoadDevice {
-    optional string mnemonic = 1; // seed encoded as BIP-39 mnemonic (12, 18 or 24 words)
-    optional HDNodeType node = 2; // BIP-32 node
-    optional string pin = 3; // set PIN protection
-    optional bool passphrase_protection = 4; // enable master node encryption using passphrase
-    optional string language = 5 [default = 'english']; // device language
-    optional string label = 6; // device label
-    optional bool skip_checksum = 7; // do not test mnemonic for valid BIP-39 checksum
-    optional uint32 u2f_counter = 8; // U2F Counter
-}
-
-/**
- * Request: Ask device to do initialization involving user interaction
- * @next EntropyRequest
- * @next Failure
- */
-message ResetDevice {
-    optional bool display_random = 1; // display entropy generated by the device before asking for additional entropy
-    optional uint32 strength = 2 [default = 256]; // strength of seed in bits
-    optional bool passphrase_protection = 3; // enable master node encryption using passphrase
-    optional bool pin_protection = 4; // enable PIN protection
-    optional string language = 5 [default = 'english']; // device language
-    optional string label = 6; // device label
-    optional bool no_backup = 7; // Initialize without ever showing the recovery sentence.
-    optional uint32 auto_lock_delay_ms = 8; // Screensaver Timeout
-    optional uint32 u2f_counter = 9; // U2F Counter
-}
-
-/**
- * Response: Ask for additional entropy from host computer
- * @prev ResetDevice
- * @next EntropyAck
- */
-message EntropyRequest {
-}
-
-/**
- * Request: Provide additional entropy for seed generation function
- * @prev EntropyRequest
- * @next ButtonRequest
- */
-message EntropyAck {
-    optional bytes entropy = 1; // 256 bits (32 bytes) of random data
-}
-
-/**
- * Request: Start recovery workflow asking user for specific words of mnemonic
- * Used to recovery device safely even on untrusted computer.
- * @next WordRequest
- */
-message RecoveryDevice {
-    optional uint32 word_count = 1; // number of words in BIP-39 mnemonic
-    optional bool passphrase_protection = 2; // enable master node encryption using passphrase
-    optional bool pin_protection = 3; // enable PIN protection
-    optional string language = 4 [default = 'english']; // device language
-    optional string label = 5; // device label
-    optional bool enforce_wordlist = 6; // enforce BIP-39 wordlist during the process
-    optional bool use_character_cipher = 7; // an optional way to input recovery sentence by character using a cipher
-    optional uint32 auto_lock_delay_ms = 8; // Screensaver Timeout
-    optional uint32 u2f_counter = 9; // U2F Counter
-    optional bool dry_run = 10; // perform dry-run recovery workflow (for safe mnemonic validation)
-}
-
-/**
- * Response: Device is waiting for user to enter word of the mnemonic
- * Its position is shown only on device's internal display.
- * @prev RecoveryDevice
- * @prev WordAck
- */
-message WordRequest {
-}
-
-/**
- * Request: Computer replies with word from the mnemonic
- * @prev WordRequest
- * @next WordRequest
- * @next Success
- * @next Failure
- */
-message WordAck {
-    required string word = 1; // one word of mnemonic on asked position
-}
-
-/**
- * Response: Device is waiting for user to enter character of the mnemonic using cipher.
- * The cipher is shown on device's internal display.
- * @prev RecoveryDevice
- * @prev CharacterAck
- */
-message CharacterRequest {
-    required uint32 word_pos = 1; // word position in BIP-39 mnemonic
-    required uint32 character_pos = 2; // character position
-}
-
-/**
- * Request: Computer replies with character from the mnemonic using cipher
- * @prev CharacterRequest
- * @next CharacterRequest
- * @next Failure
- */
-message CharacterAck {
-    optional string character = 1; // one character of mnemonic using cipher
-    optional bool delete = 2; // request to delete previous character from ciphered mnemonic
-    optional bool done = 3; // marks there are no more characters left for ciphered mnemonic
-}
-
-//////////////////////////////
-// Message signing messages //
-//////////////////////////////
-
-/**
- * Request: Ask device to sign message
- * @next MessageSignature
- * @next Failure
- */
-message SignMessage {
-    repeated uint32 address_n = 1; // BIP-32 path to derive the key from master node
-    required bytes message = 2; // message to be signed
-    optional string coin_name = 3 [default = 'Bitcoin']; // coin to use for signing
-    optional InputScriptType script_type = 4 [default = SPENDADDRESS]; // used to distinguish between various address formats (non-segwit, segwit, etc.)
-}
-
-/**
- * Request: Ask device to verify message
- * @next Success
- * @next Failure
- */
-message VerifyMessage {
-    optional string address = 1; // address to verify
-    optional bytes signature = 2; // signature to verify
-    optional bytes message = 3; // message to verify
-    optional string coin_name = 4 [default = 'Bitcoin']; // coin to use for verifying
-}
-
-/**
- * Response: Signed message
- * @prev SignMessage
- */
-message MessageSignature {
-    optional string address = 1; // address used to sign the message
-    optional bytes signature = 2; // signature of the message
-}
-
 ///////////////////////////
 // Encryption/decryption //
 ///////////////////////////
 
-/**
- * Request: Ask device to encrypt message
- * @next EncryptedMessage
- * @next Failure
- */
-message EncryptMessage {
-    optional bytes pubkey = 1; // public key
-    optional bytes message = 2; // message to encrypt
-    optional bool display_only = 3; // show just on display? (don't send back via wire)
-    repeated uint32 address_n = 4; // BIP-32 path to derive the signing key from master node
-    optional string coin_name = 5 [default = 'Bitcoin']; // coin to use for signing
-}
-
-/**
- * Response: Encrypted message
- * @prev EncryptMessage
- */
-message EncryptedMessage {
-    optional bytes nonce = 1; // nonce used during encryption
-    optional bytes message = 2; // encrypted message
-    optional bytes hmac = 3; // message hmac
-}
-
-/**
- * Request: Ask device to decrypt message
- * @next Success
- * @next Failure
- */
-message DecryptMessage {
-    repeated uint32 address_n = 1; // BIP-32 path to derive the decryption key from master node
-    optional bytes nonce = 2; // nonce used during encryption
-    optional bytes message = 3; // message to decrypt
-    optional bytes hmac = 4; // message hmac
-}
-
-/**
- * Response: Decrypted message
- * @prev DecryptedMessage
- */
-message DecryptedMessage {
-    optional bytes message = 1; // decrypted message
-    optional string address = 2; // address used to sign the message (if used)
-}
-
-/**
- * Request: Ask device to encrypt or decrypt value of given key
- * @next CipheredKeyValue
- * @next Failure
- */
-message CipherKeyValue {
-    repeated uint32 address_n = 1; // BIP-32 path to derive the key from master node
-    optional string key = 2; // key component of key:value
-    optional bytes value = 3; // value component of key:value
-    optional bool encrypt = 4; // are we encrypting (True) or decrypting (False)?
-    optional bool ask_on_encrypt = 5; // should we ask on encrypt operation?
-    optional bool ask_on_decrypt = 6; // should we ask on decrypt operation?
-    optional bytes iv = 7; // initialization vector (will be computed if not set)
-}
-
-/**
- * Response: Return ciphered/deciphered value
- * @prev CipherKeyValue
- */
-message CipheredKeyValue {
-    optional bytes value = 1; // ciphered/deciphered value
-}
 
 //////////////////////////////////
 // Transaction signing messages //
 //////////////////////////////////
-
-/**
- * Request: Ask device to sign transaction
- * @next PassphraseRequest
- * @next PinMatrixRequest
- * @next TxRequest
- * @next Failure
- */
-message SignTx {
-    required uint32 outputs_count = 1; // number of transaction outputs
-    required uint32 inputs_count = 2; // number of transaction inputs
-    optional string coin_name = 3 [default = 'Bitcoin']; // coin to use
-    optional uint32 version = 4 [default = 1]; // transaction version
-    optional uint32 lock_time = 5 [default = 0]; // transaction lock_time
-    optional uint32 expiry = 6; // only for Decred and Zcash
-    optional bool overwintered = 7; // only for Zcash
-    optional uint32 version_group_id = 8; // only for Zcash, nVersionGroupId when overwintered is set
-    optional uint32 branch_id = 10; // only for Zcash, BRANCH_ID when overwintered is set
-}
-
-/**
- * Response: Device asks for information for signing transaction or returns the last result
- * If request_index is set, device awaits TxAck message (with fields filled in according to request_type)
- * If signature_index is set, 'signature' contains signed input of signature_index's input
- * @prev SignTx
- * @prev TxAck
- */
-message TxRequest {
-    optional RequestType request_type = 1; // what should be filled in TxAck message?
-    optional TxRequestDetailsType details = 2; // request for tx details
-    optional TxRequestSerializedType serialized = 3; // serialized data and request for next
-}
 
 
 /**
@@ -743,185 +382,3 @@ message EthereumMessageSignature {
     optional bytes signature = 2; // signature of the message
 }
 
-///////////////////////
-// Identity messages //
-///////////////////////
-
-/**
- * Request: Ask device to sign identity
- * @next SignedIdentity
- * @next Failure
- */
-message SignIdentity {
-    optional IdentityType identity = 1; // identity
-    optional bytes challenge_hidden = 2; // non-visible challenge
-    optional string challenge_visual = 3; // challenge shown on display (e.g. date+time)
-    optional string ecdsa_curve_name = 4; // ECDSA curve name to use
-}
-
-/**
- * Response: Device provides signed identity
- * @prev SignIdentity
- */
-message SignedIdentity {
-    optional string address = 1; // identity address
-    optional bytes public_key = 2; // identity public key
-    optional bytes signature = 3; // signature of the identity data
-}
-
-/////////////////////
-// Policy messages //
-/////////////////////
-
-/**
- * Request: Ask device to apply policy
- * @next Success
- * @next Failure
- * @next ButtonRequest
- * @next PinMatrixRequest
- */
-message ApplyPolicies {
-    repeated PolicyType policy = 1; // policy
-}
-
-/////////////////////////
-// Bootloader Verification
-/////////////////////////
-
-/**
- * Request: Ask the device to return a hash of flash memory
- * @next FlashHashResponse
- * @next Failure
- */
-message FlashHash {
-    optional uint32 address = 1;
-    optional uint32 length = 2;
-    optional bytes challenge = 3;
-}
-
-/**
- * Request: Write a chunk of data into flash memory
- * @next FlashHashResponse
- * @next Failure
- */
-message FlashWrite {
-    optional uint32 address = 1;
-    optional bytes data = 2;
-    optional bool erase = 3;
-}
-
-/**
- * Response: Returns hash of requested data sector
- * @prev FlashHash
- * @prev FlashWrite
- */
-message FlashHashResponse {
-    optional bytes data = 1;
-}
-
-/**
- * Request: Returns a portion of flash requested
- * @next DebugLinkFlashDumpResponse
- * @next Failure
- */
-message DebugLinkFlashDump {
-    optional uint32 address = 1;
-    optional uint32 length = 2;
-}
-
-/**
- * Response: flash data
- * @prev DebugLinkFlashDump
- */
-message DebugLinkFlashDumpResponse {
-    optional bytes data = 1;
-}
-
-/**
- * Request: Ask the device to perform a soft reset
- */
-message SoftReset {
-}
-
-/////////////////////////
-// Bootloader messages //
-/////////////////////////
-
-/**
- * Request: Ask device to erase its firmware
- * @next Success
- * @next Failure
- */
-message FirmwareErase {
-}
-
-/**
- * Request: Send firmware in binary form to the device
- * @next Success
- * @next Failure
- */
-message FirmwareUpload {
-    required bytes payload_hash = 1; // sha256 hash of payload (meta + firmware)
-    required bytes payload = 2; // firmware to be loaded into device
-}
-
-/////////////////////////////////////////////////////////////
-// Debug messages (only available if DebugLink is enabled) //
-/////////////////////////////////////////////////////////////
-
-/**
- * Request: "Press" the button on the device
- * @next Success
- */
-message DebugLinkDecision {
-    required bool yes_no = 1; // true for "Confirm", false for "Cancel"
-}
-
-/**
- * Request: Computer asks for device state
- * @next DebugLinkState
- */
-message DebugLinkGetState {
-}
-
-/**
- * Response: Device current state
- * @prev DebugLinkGetState
- */
-message DebugLinkState {
-    optional bytes layout = 1; // raw buffer of display
-    optional string pin = 2; // current PIN, blank if PIN is not set/enabled
-    optional string matrix = 3; // current PIN matrix
-    optional string mnemonic = 4; // current BIP-39 mnemonic
-    optional HDNodeType node = 5; // current BIP-32 node
-    optional bool passphrase_protection = 6; // is node/mnemonic encrypted using passphrase?
-    optional string reset_word = 7; // word on device display during ResetDevice workflow
-    optional bytes reset_entropy = 8; // current entropy during ResetDevice workflow
-    optional string recovery_fake_word = 9; // (fake) word on display during RecoveryDevice workflow
-    optional uint32 recovery_word_pos = 10; // index of mnemonic word the device is expecting during RecoveryDevice workflow
-    optional string recovery_cipher = 11; // current recovery cipher
-    optional string recovery_auto_completed_word = 12; // last auto completed recovery word
-    optional bytes firmware_hash = 13; // hash of the application and meta header
-    optional bytes storage_hash = 14; // hash of storage
-}
-
-/**
- * Request: Ask device to restart
- */
-message DebugLinkStop {
-}
-
-/**
- * Response: Device wants host to log event
- */
-message DebugLinkLog {
-    optional uint32 level = 1;
-    optional string bucket = 2;
-    optional string text = 3;
-}
-
-/**
- * Request: Ask device to fill config area with sample data (used for testing firmware upload)
- */
-message DebugLinkFillConfig {
-}

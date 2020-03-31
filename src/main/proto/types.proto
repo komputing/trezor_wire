@@ -37,45 +37,8 @@ enum FailureType {
 }
 
 /**
- * Type of script which will be used for transaction output
- * @used_in TxOutputType
- */
-enum OutputScriptType {
-    PAYTOADDRESS = 0; // used for all addresses (bitcoin, p2sh, witness)
-    PAYTOSCRIPTHASH = 1; // p2sh address (deprecated; use PAYTOADDRESS)
-    PAYTOMULTISIG = 2; // only for change output
-    PAYTOOPRETURN = 3; // op_return
-    PAYTOWITNESS = 4; // only for change output
-    PAYTOP2SHWITNESS = 5; // only for change output
-}
-
-/**
- * Type of script which will be used for transaction output
- * @used_in TxInputType
- */
-enum InputScriptType {
-    SPENDADDRESS = 0; // standard p2pkh address
-    SPENDMULTISIG = 1; // p2sh multisig address
-    EXTERNAL = 2; // reserved for external inputs (coinjoin)
-    SPENDWITNESS = 3; // native segwit
-    SPENDP2SHWITNESS = 4; // segwit over p2sh (backward compatible)
-}
-
-/**
- * Type of information required by transaction signing process
- * @used_in TxRequest
- */
-enum RequestType {
-    TXINPUT = 0;
-    TXOUTPUT = 1;
-    TXMETA = 2;
-    TXFINISHED = 3;
-    TXEXTRADATA = 4;
-}
-
-/**
  * Type of ouput address specify in transaction
- * @used_in TxOutputType 
+ * @used_in TxOutputType
  */
 enum OutputAddressType {
     SPEND = 0;
